@@ -1,0 +1,132 @@
+<!DOCTYPE>
+<html>
+  <head>
+    <title>Grid</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+    <script src="https://cytoscape.github.io/cytoscape.js/api/cytoscape.js-latest/cytoscape.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script> 
+    <style>
+      body {
+        font-family: helvetica, sans-serif;
+        font-size: 14px;
+      }
+      #cy {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999;
+      }
+      h1 {
+        opacity: 0.5;
+        font-size: 1em;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Node Grid</h1>
+    <div id="cy"></div>
+    
+  <script>
+      function Node(data) {
+        this.data = data;
+        this.sibling = null;
+        this.child = null;
+      }  
+
+      function Grid(data) {
+        var node = new Node(data);
+        this._root = node;
+      }
+
+      //Here is an example of a grid
+      var grid = new Grid('top left');
+      grid._root.sibling = new Node('second column');
+      grid._root.sibling.sibling = new Node('third column');
+      grid._root.child = new Node('second row first column');
+      grid._root.sibling.sibling.child = new Node('second row third column');
+      grid._root.sibling.sibling.child.child = new Node('third row third column');
+      grid._root.sibling.sibling.child.child.child = new Node('fourth row third column');
+      grid._root.sibling.sibling.sibling = new Node('fourth column');
+      grid._root.sibling.sibling.sibling.sibling = new Node('fifth column');
+      grid._root.sibling.sibling.sibling.sibling.child = new Node('second row fifth column');
+
+      function render(grid) {
+      
+        var pos, elems = [];
+        var positions = {
+          "top left": {x: 100}, "first column": {x: 100}, "second column": {x: 200}, "third column": {x: 300}, "fourth column": {x: 400}, "fifth column": {x: 500}, "sixth column": {x: 600}, "seventh column": {x: 700}, "eighth column": {x: 800}, "ninth column": {x: 900},
+          "second row": {y: 200}, "third row": {y: 300}, "fourth row": {y: 400}, "fifth row": {y: 500}, "sixth row": {y: 600}, "seventh row": {y: 700}, "eighth row": {y: 800}, "ninth row": {y: 900},
+        };
+        
+        var setPos = function(label){
+          _.each(positions, function(n, i) {
+            if(label.indexOf(i) !== -1) {
+              var key = _.keys(n)[0];
+              pos[key] = n[key];
+            }
+          });
+        }
+        
+        var setElems = function(obj){ 
+          pos = {x: 100, y: 100};
+          _.each(obj, function(n, key, i) { 
+            if(_.isNull(n)) return; 
+            var elem;
+            if(key == "data") { 
+              setPos(n);
+              elem = { data: { id: n, label: n }, position: pos};
+            } else {
+              elem = { data: { source: i.data, target: n.data}};
+              setElems(n);
+            }
+            elems.push(elem);
+          });
+        }
+        
+        setElems(grid['_root']);
+        var cy = window.cy = cytoscape({
+          container: document.getElementById('cy'),
+          boxSelectionEnabled: false,
+          autounselectify: true,
+          layout: {
+            name: 'preset',
+            fit: true, // whether to fit to viewport
+            padding: 70
+          },
+          style: [
+            {
+              selector: 'node',
+              style: {
+                'shape': 'rectangle',
+                'height': 10,
+                'width': 'label',
+                'background-color': '#ccc',
+                'label': 'data(label)',
+                'text-valign': 'center',
+                'text-halign': 'center'
+              }
+            },
+            {
+              selector: 'edge',
+              style: {
+                'width': 3,
+                'line-color': '#ccc'
+              }
+            }
+          ],
+          elements: elems
+        });
+      
+      }
+
+      document.addEventListener('DOMContentLoaded', function(){
+        render(grid);  
+      });
+
+    </script>
+  </body>
+
+</html>
